@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "gift": "Paracaidismo Extremo",
+    "tipo": "Aventura",
+    "tiempo": "3 horas",
+    "precio": 450,
+    "imagen": "https://i.imgur.com/l83GvXp.jpeg"
+  },
+  {
+    "id": 2,
+    "gift": "Masaje de Piedras Calientes",
+    "tipo": "Relajacion",
+    "tiempo": "90 minutos",
+    "precio": 120,
+    "imagen": "https://i.imgur.com/8Qx2bM4.jpeg"
+  },
+  {
+    "id": 3,
+    "gift": "Cata de Vinos Premium",
+    "tipo": "Gastronomia",
+    "tiempo": "2 horas",
+    "precio": 90,
+    "imagen": "https://i.imgur.com/gK9lY3j.jpeg"
+  },
+  {
+    "id": 4,
+    "gift": "Buceo en Arrecife",
+    "tipo": "Aventura",
+    "tiempo": "1 día completo",
+    "precio": 320,
+    "imagen": "https://i.imgur.com/a5nC0gH.jpeg"
+  }
+]

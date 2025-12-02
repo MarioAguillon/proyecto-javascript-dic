@@ -1,186 +1,129 @@
-// ===========================================
-// 1. IMPORTACIONES
-// ===========================================
+import { Gift } from "./clases.js";
 
-// Importa la Clase Gift para crear nuevos objetos
-import { Gift } from './clases.js'; 
-// Importa el arreglo de datos iniciales
-import datos from '../Data/Data.json' assert { type: 'json' };
+// URL base del backend
+const API_URL = "http://localhost:3000/api/gifts";
 
-// ===========================================
-// 2. VARIABLES GLOBALES y SELECTORES DEL DOM
-// ===========================================
+// Elementos del DOM
+const cuerpoTabla = document.querySelector("#cuerpo-tabla");
+const formAgregar = document.querySelector("#form-gift");
+const formModal = document.querySelector("#form-modal");
+const myModal = new bootstrap.Modal(document.getElementById("modal-gift"));
 
-// Selector del cuerpo de la tabla para insertar filas (READ)
-const cuerpoTabla = document.querySelector('#cuerpoTabla');
-// Selector del formulario de agregar (CREATE)
-const formAgregar = document.querySelector('#formAgregar');
-// Se usará para guardar el ID del Gift que se está editando
 let idGiftUpdate = null;
 
-// Inicializa el objeto Modal de Bootstrap para poder mostrarlo y ocultarlo
-const modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
+// =========================
+//  READ (GET)
+// =========================
+const cargarTabla = async () => {
+    cuerpoTabla.innerHTML = "";
 
-// ===========================================
-// 3. FUNCIONES CRUD
-// ===========================================
+    const respuesta = await fetch(API_URL);
+    const data = await respuesta.json();
 
-/**
- * READ: Carga y muestra los datos en la tabla HTML.
- */
-const cargarTabla = () => {
-  // Limpia el contenido anterior del cuerpo de la tabla
-  cuerpoTabla.innerHTML = ''; 
+    // Los datos vienen en data.data por la paginación del server
+    const gifts = data.data;
 
-  // Itera sobre el arreglo 'datos' y crea una fila (<tr>) por cada objeto
-  datos.forEach(gift => {
-    // Crea la fila completa con los datos y botones de acción
-    const fila = `
-      <tr>
-        <td>${gift.id}</td>
-        <td>${gift.gift}</td>
-        <td>${gift.tipo}</td>
-        <td>${gift.tiempo}</td>
-        <td>$${gift.precio}</td>
-        <td>
-          <img src="${gift.imagen}" alt="${gift.gift}" style="width: 50px; height: 50px; object-fit: cover;">
-        </td>
-        <td>
-          <button class="btn btn-warning btn-sm me-2" onclick="MostrarModal(${gift.id})">
-            Editar ✏️
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="BorrarGift(${gift.id})">
-            Eliminar ❌
-          </button>
-        </td>
-      </tr>
-    `;
-    // Inserta la fila al final del cuerpo de la tabla
-    cuerpoTabla.innerHTML += fila;
-  });
+    gifts.forEach(item => {
+        const fila = document.createElement("tr");
+
+        fila.innerHTML = `
+            <td>${item.gift}</td>
+            <td>${item.tipo}</td>
+            <td>${item.tiempo}</td>
+            <td>$${item.precio}</td>
+            <td>
+                <button class="btn btn-warning" onclick="window.MostrarModal(${item.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-danger" onclick="window.BorrarGift(${item.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+
+        cuerpoTabla.appendChild(fila);
+    });
 };
 
-/**
- * DELETE: Elimina un Gift Card del arreglo.
- * Se define en 'window' para ser accesible desde el atributo onclick del HTML.
- * @param {number} id - El ID del Gift Card a eliminar.
- */
-window.BorrarGift = (id) => {
-  if (confirm('¿Estás seguro de que quieres eliminar esta Gift Card?')) {
-    // Busca el índice (posición) del objeto con el ID coincidente
-    const index = datos.findIndex(gift => gift.id === id);
-    
-    if (index !== -1) {
-      // Elimina 1 elemento en la posición encontrada
-      datos.splice(index, 1);
-      // Recarga la tabla para reflejar el cambio en la interfaz
-      cargarTabla(); 
-      alert('✅ Gift Card eliminada con éxito.');
-    }
-  }
-};
+window.addEventListener("DOMContentLoaded", cargarTabla);
 
-/**
- * CREATE: Agrega un nuevo Gift Card al arreglo.
- * @param {Event} e - El evento submit del formulario.
- */
-const agregarGift = (e) => {
-  e.preventDefault(); // Evita que la página se recargue al enviar el formulario
+// =========================
+//  CREATE (POST)
+// =========================
+formAgregar.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  // Captura los valores del formulario
-  const giftNombre = document.querySelector('#giftNombre').value;
-  const giftTipo = document.querySelector('#giftTipo').value;
-  const giftTiempo = document.querySelector('#giftTiempo').value;
-  const giftPrecio = parseFloat(document.querySelector('#giftPrecio').value);
-  const giftImagen = document.querySelector('#giftImagen').value;
+    const nuevoGift = {
+        gift: document.querySelector("#gift").value,
+        tipo: document.querySelector("#tipo").value,
+        tiempo: document.querySelector("#tiempo").value,
+        precio: document.querySelector("#precio").value,
+        imagen: document.querySelector("#imagen").value
+    };
 
-  // Genera un nuevo ID único
-  // Si hay datos, toma el ID del último elemento y le suma 1. Si no hay, usa 1.
-  const nuevoId = datos.length > 0 ? datos.at(-1).id + 1 : 1; 
+    await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevoGift)
+    });
 
-  // Crea una nueva instancia de la clase Gift
-  const nuevoGift = new Gift(
-    nuevoId,
-    giftNombre,
-    giftTipo,
-    giftTiempo,
-    giftPrecio,
-    giftImagen
-  );
-
-  // Agrega el nuevo objeto al arreglo de datos
-  datos.push(nuevoGift);
-
-  // 1. Limpia el formulario
-  formAgregar.reset();
-  // 2. Actualiza la tabla
-  cargarTabla();
-  
-  alert('✨ Gift Card creada con éxito!');
-};
-
-/**
- * UPDATE (Paso 1): Muestra el modal de edición y precarga los datos.
- * Se define en 'window' para ser accesible desde el atributo onclick del HTML.
- * @param {number} id - El ID del Gift Card a editar.
- */
-window.MostrarModal = (id) => {
-  // Guarda el ID globalmente para usarlo en la función giftUpdate()
-  idGiftUpdate = id; 
-  
-  // Encuentra el objeto Gift Card en el arreglo por su ID
-  const giftAEditar = datos.find(gift => gift.id === id);
-  
-  if (giftAEditar) {
-    // Precarga los inputs del modal con los datos actuales
-    document.querySelector('#editGiftNombre').value = giftAEditar.gift;
-    document.querySelector('#editGiftTipo').value = giftAEditar.tipo;
-    document.querySelector('#editGiftTiempo').value = giftAEditar.tiempo;
-    document.querySelector('#editGiftPrecio').value = giftAEditar.precio;
-    document.querySelector('#editGiftImagen').value = giftAEditar.imagen;
-    
-    // Muestra el modal
-    modalEditar.show();
-  }
-};
-
-/**
- * UPDATE (Paso 2): Guarda los cambios hechos en el modal.
- * Se define en 'window' para ser accesible desde el botón "Guardar Cambios" del modal.
- */
-window.giftUpdate = () => {
-  // Encuentra el índice (posición) del Gift Card que se está editando
-  const index = datos.findIndex(gift => gift.id === idGiftUpdate);
-  
-  if (index !== -1) {
-    // 1. Captura los nuevos valores del formulario del modal
-    const nuevoNombre = document.querySelector('#editGiftNombre').value;
-    const nuevoTipo = document.querySelector('#editGiftTipo').value;
-    const nuevoTiempo = document.querySelector('#editGiftTiempo').value;
-    const nuevoPrecio = parseFloat(document.querySelector('#editGiftPrecio').value);
-    const nuevaImagen = document.querySelector('#editGiftImagen').value;
-
-    // 2. Actualiza las propiedades del objeto en el arreglo
-    datos[index].gift = nuevoNombre;
-    datos[index].tipo = nuevoTipo;
-    datos[index].tiempo = nuevoTiempo;
-    datos[index].precio = nuevoPrecio;
-    datos[index].imagen = nuevaImagen;
-    
-    // 3. Oculta el modal y actualiza la tabla
-    modalEditar.hide();
+    formAgregar.reset();
     cargarTabla();
-    alert('🎉 Gift Card actualizada con éxito!');
-  }
+});
+
+// =========================
+//  DELETE (DELETE)
+// =========================
+window.BorrarGift = async (id) => {
+
+    const validar = confirm("¿Seguro que deseas eliminar esta Gift Card?");
+    if (!validar) return;
+
+    await fetch(`${API_URL}/${id}`, {
+        method: "DELETE"
+    });
+
+    cargarTabla();
 };
 
+// =========================
+//  UPDATE (MODAL)
+// =========================
+window.MostrarModal = async (id) => {
+    idGiftUpdate = id;
 
-// ===========================================
-// 4. EVENTOS Y EJECUCIÓN INICIAL
-// ===========================================
+    const res = await fetch(`${API_URL}/${id}`);
+    const gift = await res.json();
 
-// Escucha el evento 'submit' del formulario para crear nuevos elementos
-formAgregar.addEventListener('submit', agregarGift);
+    document.querySelector("#gift-modal").value = gift.gift;
+    document.querySelector("#tipo-modal").value = gift.tipo;
+    document.querySelector("#tiempo-modal").value = gift.tiempo;
+    document.querySelector("#precio-modal").value = gift.precio;
+    document.querySelector("#imagen-modal").value = gift.imagen;
 
-// Llama a la función de carga inicial para mostrar los datos del Data.json
-document.addEventListener('DOMContentLoaded', cargarTabla);
+    myModal.show();
+};
+
+// =========================
+//  UPDATE (PUT)
+// =========================
+formModal.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const giftActualizado = {
+        gift: document.querySelector("#gift-modal").value,
+        tipo: document.querySelector("#tipo-modal").value,
+        tiempo: document.querySelector("#tiempo-modal").value,
+        precio: document.querySelector("#precio-modal").value,
+        imagen: document.querySelector("#imagen-modal").value
+    };
+
+    await fetch(`${API_URL}/${idGiftUpdate}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(giftActualizado)
+    });
+
+    cargarTabla();
+    myModal.hide();
+});

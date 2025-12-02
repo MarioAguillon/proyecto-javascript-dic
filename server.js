@@ -1,4 +1,4 @@
-// server.js (Actividades 1 y 2 Completas: CRUD, Validación, Búsqueda y Paginación)
+// server.js (Actividades 1, 2 y 3 Completas: CRUD, Validación, Búsqueda, Paginación y Ordenamiento)
 const express = require('express');
 const cors = require('cors');
 // Importa el módulo fs con API de promesas para usar async/await
@@ -17,7 +17,7 @@ app.use(express.json());
 // MIDDLEWARE DE VALIDACIÓN (Actividad 1 - Robustez)
 // ===============================================
 
-// Función flecha para validar datos
+// Función flecha para validar datos, se usa en POST y PUT
 const validarGiftCard = (req, res, next) => {
     const { gift, tipo, tiempo, precio, imagen } = req.body;
 
@@ -41,7 +41,7 @@ const validarGiftCard = (req, res, next) => {
 
 
 // ===============================================
-// FUNCIONES DE MANEJO DE ARCHIVOS (Persistencia con Funciones Flecha Asíncronas)
+// FUNCIONES DE MANEJO DE ARCHIVOS (Persistencia)
 // ===============================================
 
 // Función flecha asíncrona para leer el archivo
@@ -72,17 +72,17 @@ const writeGifts = async (gifts) => {
 // ENDPOINTS CRUD 
 // ===============================================
 
-// 1. READ (GET /api/gifts) - Implementa BÚSQUEDA, FILTRADO Y PAGINACIÓN (Actividad 2)
+// 1. READ (GET /api/gifts) - BÚSQUEDA, FILTRADO, ORDENAMIENTO Y PAGINACIÓN (Actividades 2 y 3)
 app.get('/api/gifts', async (req, res) => {
     try {
         let gifts = await readGifts(); // Cargar todos los datos
         
         // --- 1. BÚSQUEDA Y FILTRADO (req.query) ---
-        const { q, tipo } = req.query; 
+        const { q, tipo, sortBy, order } = req.query; 
         
         if (q) {
             const query = q.toLowerCase();
-            // Filtrar por nombre del regalo (gift) o por tipo
+            // ¡ESTA PARTE ESTABA ROTA! Se corrige el filtro.
             gifts = gifts.filter(gift => 
                 gift.gift.toLowerCase().includes(query) || 
                 gift.tipo.toLowerCase().includes(query)
@@ -96,13 +96,39 @@ app.get('/api/gifts', async (req, res) => {
                 gift.tipo.toLowerCase() === tipoQuery
             );
         }
+        
+        // --- 2. ORDENAMIENTO (SORTING) ---
+        if (sortBy) {
+            // Determinar la dirección (ascendente por defecto, -1 si es 'desc')
+            const sortOrder = order && order.toLowerCase() === 'desc' ? -1 : 1; 
 
-        // --- 2. PAGINACIÓN ---
+            gifts.sort((a, b) => {
+                const aValue = a[sortBy];
+                const bValue = b[sortBy];
+
+                // Lógica de ordenamiento robusta
+                if (aValue === undefined || aValue === null) return sortOrder;
+                if (bValue === undefined || bValue === null) return -sortOrder;
+
+                // Ordenamiento numérico (para campos como 'precio')
+                if (!isNaN(parseFloat(aValue)) && !isNaN(parseFloat(bValue))) {
+                    return (parseFloat(aValue) - parseFloat(bValue)) * sortOrder;
+                }
+                
+                // Ordenamiento alfabético (para campos como 'gift' o 'tipo')
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    return aValue.localeCompare(bValue) * sortOrder;
+                }
+
+                return 0;
+            });
+        }
+
+        // --- 3. PAGINACIÓN ---
         // Obtener página (por defecto 1) y límite (por defecto 10)
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         
-        // Calcular los índices de inicio y fin para el corte (.slice)
         const startIndex = (page - 1) * limit;
         const endIndex = page * limit;
         
@@ -113,7 +139,7 @@ app.get('/api/gifts', async (req, res) => {
         results.totalPages = Math.ceil(gifts.length / limit);
         results.currentPage = page;
 
-        // Calcular la página siguiente (si existe) y anterior (si no es la primera)
+        // Lógica para los enlaces next/previous
         if (endIndex < gifts.length) {
             results.next = { page: page + 1, limit: limit };
         }
@@ -121,10 +147,9 @@ app.get('/api/gifts', async (req, res) => {
             results.previous = { page: page - 1, limit: limit };
         }
 
-        // Aplicar la paginación a los datos finales
+        // Aplicar la paginación a los datos finales ordenados
         results.data = gifts.slice(startIndex, endIndex);
 
-        // Devolver el objeto de respuesta completo
         res.json(results);
         
     } catch (error) {
@@ -199,7 +224,7 @@ app.delete('/api/gifts/:id', async (req, res) => {
         
         if (gifts.length < initialLength) {
             await writeGifts(gifts);
-            res.status(204).send(); // 204 No Content para eliminación exitosa
+            res.status(204).send(); // 204 No Content
         } else {
             res.status(404).send({ message: "Gift Card no encontrada para eliminar" });
         }
@@ -209,16 +234,15 @@ app.delete('/api/gifts/:id', async (req, res) => {
 });
 
 // --- Servir archivos estáticos y ruta raíz ---
-// Permite acceder a index.html, css/styles.css y js/app.js
 app.use(express.static(__dirname)); 
 
-// Sirve index.html cuando se accede a la ruta raíz (http://localhost:3000/)
+// Sirve index.html cuando se accede a la ruta raíz
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // --- Iniciar el servidor ---
 app.listen(PORT, () => {
-    console.log(`Servidor de backend con VALIDACIÓN, BÚSQUEDA Y PAGINACIÓN corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor de backend COMPLETO (Validación, Búsqueda, Ordenamiento) corriendo en http://localhost:${PORT}`);
     console.log(`Accede a la aplicación en: http://localhost:${PORT}`);
 });

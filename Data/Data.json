@@ -1,34 +1,18 @@
 [
   {
-    "id": 1,
-    "gift": "Paracaidismo Extremo",
-    "tipo": "Aventura",
-    "tiempo": "3 horas",
-    "precio": 450,
-    "imagen": "https://i.imgur.com/l83GvXp.jpeg"
+    "gift": "Spotify Premium",
+    "tipo": "Suscripción",
+    "tiempo": "1 mes",
+    "precio": "20000",
+    "imagen": "https://cdn-icons-png.flaticon.com/512/2111/2111624.png",
+    "id": 1
   },
   {
-    "id": 2,
-    "gift": "Masaje de Piedras Calientes",
-    "tipo": "Relajacion",
-    "tiempo": "90 minutos",
-    "precio": 120,
-    "imagen": "https://i.imgur.com/8Qx2bM4.jpeg"
-  },
-  {
-    "id": 3,
-    "gift": "Cata de Vinos Premium",
-    "tipo": "Gastronomia",
-    "tiempo": "2 horas",
-    "precio": 90,
-    "imagen": "https://i.imgur.com/gK9lY3j.jpeg"
-  },
-  {
-    "id": 4,
-    "gift": "Buceo en Arrecife",
-    "tipo": "Aventura",
-    "tiempo": "1 día completo",
-    "precio": 320,
-    "imagen": "https://i.imgur.com/a5nC0gH.jpeg"
+    "gift": "hola",
+    "tipo": "musica",
+    "tiempo": "1 mes",
+    "precio": "6000",
+    "imagen": "https://cdn-icons-png.flaticon.com/512/2111/2111624.png",
+    "id": 2
   }
 ]
